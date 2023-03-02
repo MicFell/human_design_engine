@@ -204,6 +204,20 @@ class hd_features:
         
         return date_to_gate_dict
     
+    def day_chart(self,*time_stamp):
+        '''calculate day chart
+           Args:
+                time_stamp(tuple): format(year,month,day,hour,minute,second,timezone_offset)
+           Return: 
+                date_to_gate_dict(dict): keys->[planets,label,longitude,gate,line,color,tone,base] of daychart
+        '''
+        birth_julday = self.timestamp_to_juldate(time_stamp)
+        birth_planets = self.date_to_gate(birth_julday,"prs")
+        result_dict = birth_planets
+
+        return result_dict
+    
+    
 #############################################################################
 """calculation functions based on hd_features based-class starts from here"""
 
@@ -604,7 +618,7 @@ def get_full_chakra_connect_dict():
                
     return chakra_connect_dict
         
-def calc_single_hd_features(timestamp,report=False,channel_meaning=False):
+def calc_single_hd_features(timestamp,report=False,channel_meaning=False,day_chart_only=False):
     '''
     from given timestamp calc basic additional hd_features
     print report if requested
@@ -636,31 +650,38 @@ def calc_single_hd_features(timestamp,report=False,channel_meaning=False):
         raise ValueError('check timestamp Format') 
     else:
         instance = hd_features(*timestamp) #create instance of hd_features class
-        date_to_gate_dict = instance.birth_creat_date_to_gate(instance.time_stamp) 
-        active_channels_dict,active_chakras = get_channels_and_active_chakras(
-            date_to_gate_dict,meaning=channel_meaning)
-        typ = get_typ(active_channels_dict,active_chakras)
-        auth = get_auth(active_chakras,active_channels_dict)
-        inc_cross = get_inc_cross(date_to_gate_dict)
-        inc_cross_typ = inc_cross[-3:]
-        profile = get_profile(date_to_gate_dict)
-        split = get_split(active_channels_dict,active_chakras)
-        variables = get_variables(date_to_gate_dict)
 
-        if report == True:
-            print("birth date: {}".format(timestamp[:-2]))
-            print("create date: {}".format(instance.create_date))
-            print("energie-type: {}".format(typ))
-            print("inner authority: {}".format(auth))
-            print("inc. cross: {}".format(inc_cross))
-            print("profile: {}".format(profile))
-            print("active chakras: {}".format(active_chakras))
-            print("split: {}".format(split))
-            print("variables: {}".format(variables))
-            display(pd.DataFrame(date_to_gate_dict))
-            display(pd.DataFrame(active_channels_dict))
+        if day_chart_only:
+            date_to_gate_dict = instance.day_chart(instance.time_stamp)
+        else:
+            date_to_gate_dict = instance.birth_creat_date_to_gate(instance.time_stamp) 
+            active_channels_dict,active_chakras = get_channels_and_active_chakras(
+                date_to_gate_dict,meaning=channel_meaning)
+            typ = get_typ(active_channels_dict,active_chakras)
+            auth = get_auth(active_chakras,active_channels_dict)
+            inc_cross = get_inc_cross(date_to_gate_dict)
+            inc_cross_typ = inc_cross[-3:]
+            profile = get_profile(date_to_gate_dict)
+            split = get_split(active_channels_dict,active_chakras)
+            variables = get_variables(date_to_gate_dict)
+
+            if report == True:
+                print("birth date: {}".format(timestamp[:-2]))
+                print("create date: {}".format(instance.create_date))
+                print("energie-type: {}".format(typ))
+                print("inner authority: {}".format(auth))
+                print("inc. cross: {}".format(inc_cross))
+                print("profile: {}".format(profile))
+                print("active chakras: {}".format(active_chakras))
+                print("split: {}".format(split))
+                print("variables: {}".format(variables))
+                display(pd.DataFrame(date_to_gate_dict))
+                display(pd.DataFrame(active_channels_dict))
          
-    return typ,auth,inc_cross,inc_cross_typ,profile,split,date_to_gate_dict,active_chakras,active_channels_dict
+    if day_chart_only==False:
+        return  typ,auth,inc_cross,inc_cross_typ,profile,split,date_to_gate_dict,active_chakras,active_channels_dict
+    else:
+        return date_to_gate_dict
 
 def unpack_single_features(single_result):
     '''
@@ -741,7 +762,7 @@ def get_timestamp_list(start_date,end_date,percentage,time_unit,intervall):
     if not len(timestamp_list):
         raise ValueError('check startdate < enddate & (enddate-intervall) >= startdate')  
     return timestamp_list
-   
+    
 def calc_mult_hd_features(start_date,end_date,percentage,time_unit,intervall,num_cpu):
     """
     calculate multiple hd_features from given timerange
@@ -887,16 +908,18 @@ def get_composite_combinations(persons_dict):
     
     return result_df
 
-def get_penta(persons_dict):
+def get_penta(persons_dict,report=False):
     """
     take gates of given identity combination (concat) and look if it matches to "penta" gates
     Args:
          person dict(dict): eg {"person1":(2022,2,2,2,22,0,2),"person2":(1922,2,2,2,22,0,2)}
+         report(bool): print full report (dataframe, with every gate matched)
     Return:
         df(pd.Dataframe): penta gates as cols
                           if identity combination has penta gate:x, else:0 
+        persentage(float): how much percent of penta is matched
     """
-    penta_dict = {31:[],8:[],33:[],7:[],1:[],13:[],15:[],2:[],46:[],5:[],14:[],29:[]}
+    penta_dict = hd_constants.penta_dict
     
     for person in persons_dict.keys():
         identity_dict = get_single_hd_features(persons_dict,person,'date_to_gate_dict')
@@ -909,10 +932,100 @@ def get_penta(persons_dict):
 
     result_dict = {elem:pd.Series(persons_dict.keys()).isin(penta_dict[elem]) 
                    for elem in penta_dict.keys()}
-    df = pd.DataFrame(result_dict) 
-    df.loc[df.shape[0]+1,:] = [any(df[col]) for col in df.columns]
-    df = df.replace({False:"o",True:"x"})
-    df["index"] = list(persons_dict.keys())+["all"]
-    df = df.set_index("index",drop=True)
+    penta_gates_bool = [(any(result_dict[key])) for key in result_dict.keys()]
+    sum_penta_gates = sum(penta_gates_bool)
+    if report:
+        df = pd.DataFrame(result_dict) 
+        df.loc[df.shape[0]+1,:] = [any(df[col]) for col in df.columns]
+        df = df.replace({False:"o",True:"x"})
+        df["index"] = list(persons_dict.keys())+["all"]
+        df = df.set_index("index",drop=True)
+        display(df)
+    return round(sum_penta_gates/12*100,2)
+
+
+
+class hd_composite:
+
+    def __init__(self,birth_timestamp,start_date,end_date,percentage,time_unit,intervall,num_cpu):
     
-    return df
+        '''
+        Initialization of timestamp attributes for basic calculation 
+        hd_constants.py 
+        '''
+        self.birth_timestamp = birth_timestamp
+        self.start_date = start_date
+        self.end_date = end_date
+        self.percentage = percentage
+        self.time_unit = time_unit
+        self.intervall = intervall
+        self.num_cpu = num_cpu
+    
+    def date_to_gate_hd_chart(self):
+        hd_chart_birth = calc_single_hd_features(self.birth_timestamp,
+                                                report=False,channel_meaning=True,day_chart_only=False)
+        date_to_gate_birth = hd_chart_birth[6] # only date_to_gate_dict
+        del date_to_gate_birth["ch_gate"] #for concat both dicts
+
+        self.date_to_gate_birth = date_to_gate_birth
+
+        return date_to_gate_birth
+
+    def get_composite_hd_day_chart(self,day_date):
+        date_to_gate_day = calc_single_hd_features(
+                                day_date,
+                                day_chart_only=True)
+
+        #concat day chart and birth chart to new identity
+        date_to_gate_dict = {
+                    key: self.date_to_gate_birth [key] + date_to_gate_day[key] 
+                    for key in self.date_to_gate_birth.keys()
+                                    }
+
+        #get channels and chakras
+        active_channels_dict,active_chakras = (get_channels_and_active_chakras(
+                                                    date_to_gate_dict))
+        typ = get_typ(active_channels_dict,active_chakras)
+        auth = get_auth(active_chakras,active_channels_dict)
+        split = get_split(active_channels_dict,active_chakras)
+        planets = date_to_gate_dict
+        return active_channels_dict,active_chakras,typ,auth,split,planets
+
+    def calc_multi_comp_charts(self):
+    
+        timestamp_list=get_timestamp_list(
+                                self.start_date,
+                                self.end_date,
+                                self.percentage,
+                                self.time_unit,
+                                self.intervall) #line change every 22 hour
+        p = Pool(self.num_cpu)
+        result = process_map(self.get_composite_hd_day_chart,timestamp_list,chunksize=self.num_cpu)
+        p.close()
+        p.join()
+
+        self.result = result
+        self.timestamp_list = timestamp_list
+
+    def unpack_mult_features(self):
+        '''
+        convert nested lists into dict
+        if full: date_to_gate list is also extracted to new dict 
+        Args:
+            result(list): result from multi timestamp calculation (nested lists)
+        Return:
+            return_dict(dict): keys: "typ","auth","inc_cross","profile"
+                                    "split,"date_to_gate_dict","active_chakra"
+                                    "active_channel"
+        '''
+        return_dict = {}
+        # unpacking multiple calculation values
+
+        return_dict["active_channel_list"] = [self.result[i][0] for i in range (len(self.result))]
+        return_dict["active_chakra_list"] = [self.result[i][1] for i in range (len(self.result))]
+        return_dict["typ_list"] = [self.result[i][2] for i in range (len(self.result))]
+        return_dict["auth_list"] = [self.result[i][3] for i in range (len(self.result))]
+        return_dict["split_list"] = [self.result[i][4] for i in range (len(self.result))]
+        return_dict["planet_dict_list"] = [self.result[i][5] for i in range (len(self.result))]
+
+        return return_dict
