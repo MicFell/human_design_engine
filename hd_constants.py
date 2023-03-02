@@ -123,4 +123,91 @@ IC_CROSS_TYP = {
                 (6,2):"LAC",
                 (6,3):"LAC",
                 }
+
+penta_dict = {
+                31:[],
+                8:[],
+                33:[],
+                7:[],
+                1:[],
+                13:[],
+                15:[],
+                2:[],
+                46:[],
+                5:[],
+                14:[],
+                29:[]
+             }
+
+circuit_typ_dict={
+                    (24,61):"Knowledge",
+					(23,43):"Knowledge",
+					( 1, 8):"Knowledge",
+					( 2,14):"Knowledge",
+					( 3,60):"Knowledge",
+					(39,55):"Knowledge",
+					(12,22):"Knowledge",
+					(28,38):"Knowledge",
+					(20,57):"Knowledge",
+					(10,34):"Centre",
+					(25,51):"Centre",
+					( 4,63):"Realize",
+					(17,62):"Realize",
+					( 7,31):"Realize",
+					( 5,15):"Realize",
+					( 9,52):"Realize",
+					(18,58):"Realize",
+					(16,48):"Realize",
+					(47,64):"Sense",
+					(11,56):"Sense",
+					(13,33):"Sense",
+					(29,46):"Sense",
+					(42,53):"Sense",
+					(30,41):"Sense",
+					(35,36):"Sense",
+					(32,54):"Ego",
+					(26,44):"Ego",
+					(19,49):"Ego",
+					(37,40):"Ego",
+					(21,45):"Ego",
+					( 6,59):"Protect",
+					(27,50):"Protect",
+					(10,20):"Integration",
+					(20,34):"Integration",
+					(34,57):"Integration",
+					(10,57):"Integration",
+				 }
+circuit_group_typ_dict = {
+                        "Knowledge":"Individual",
+						"Centre":"Individual",
+						"Realize":"Collective",
+						"Sense":"Collective",
+						"Ego":"Tribal",
+						"Protect":"Tribal",
+						"Integration":"Integration",
+                        }
+
+awareness_stream_dict = {
+						(58,18,48,16):"Taste",
+						(38,28,67,20):"Intuition",
+						(54,32,44,26):"Instinct",
+						(41,30,36,35):"Feel",
+						(39,55,22,12):"Emotion",
+						(19,49,37,40):"Sensitivity",
+						(64,47,11,56):"Realize/Meaning",
+						(61,24,43,23):"Knowledge",
+						(63, 4,17,62):"Understand"
+						}
+						
+awareness_stream_group_dict = {
+								"Taste":"Spleen",
+								"Intuition":"Spleen",
+								"Instinct":"Spleen",
+								"Feel":"SolarPlexus",
+								"Emotion":"SolarPlexus",
+								"Sensitivity":"SolarPlexus",
+								"Realize/Meaning":"Anja",
+								"Knowledge":"Anja",
+								"Understand":"Anja"
+								}
                         
